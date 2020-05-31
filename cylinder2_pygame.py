@@ -98,7 +98,7 @@ def rotate(d_x,d_y):
             proj3 = proj3.dot(S)
             
             draw_triangle(proj1[0],proj1[1],proj2[0],proj2[1],proj3[0],proj3[1])
-            # scanline([[proj1[0],proj1[1]],[proj2[0],proj2[1]],[proj3[0],proj3[1]]],tex_points)
+            scanline([[proj1[0],proj1[1]],[proj2[0],proj2[1]],[proj3[0],proj3[1]]],tex_points)
             # todo: fill
             # scanline()
 
@@ -118,25 +118,22 @@ class Point:
 
 # load texture image 
 im = Image.open('texture.jpg')
-#im = Image.open('tex.gif')
+im = Image.open('tex.gif')
 rgb_im = im.convert('RGB')
 texture_h = rgb_im.height
 texture_w = rgb_im.width
-# test triangle
-p1 = [100,500]
-p2 = [500,100]
-p3 = [800,500]
 
-def horizline(start,end):
-    r,g,b =rgb_im.getpixel((100,100))
-    y = int(start.y)
-    v_rel = int(start.v * texture_h)%texture_h
-    u_start = int(start.u * texture_w)
-    for x in range(int(start.x), int(end.x)):
+
+# def horizline(start,end):
+#     r,g,b =rgb_im.getpixel((100,100))
+#     y = int(start.y)
+#     v_rel = int(start.v * texture_h)%texture_h
+#     u_start = int(start.u * texture_w)
+#     for x in range(int(start.x), int(end.x)):
         
-        r,g,b = rgb_im.getpixel((u_start%texture_w,v_rel))
-        screen.set_at((x, y), pygame.Color(r,g,b))
-        u_start +=1
+#         r,g,b = rgb_im.getpixel((u_start%texture_w,v_rel))
+#         screen.set_at((x, y), pygame.Color(r,g,b))
+#         u_start +=1
 
 def putpixel(x,y,u,v):
         if(u <= 0 or v <= 0):
@@ -182,14 +179,14 @@ def scanline(points,texture_points):
 
     S=A.copy()
     E=A.copy()
-
+    # calulate inner deltas
+    if(dx2 != dx1):
+        du = (du2 - du1)/(dx2-dx1)
+        dv = (dv2 - dv1)/(dx2-dx1)
+    else:
+        du=dv=0
     if(dx1 > dx2):
         while(S.y<=B.y):
-            if(E.x-S.x > 0):
-                dv = (E.v-S.v)/(E.x-S.x)
-                du = (E.u-S.u)/(E.x-S.x)
-            else:
-                dv=du=0
             u = S.u
             v = S.v
             for x in range(int(S.x),int(E.x)):
@@ -207,12 +204,6 @@ def scanline(points,texture_points):
             E.x+=dx1
         E=B
         while(S.y<=C.y):
-            #horizline(S,E)
-            if(E.x-S.x > 0):
-                dv = (E.v-S.v)/(E.x-S.x)
-                du = (E.u-S.u)/(E.x-S.x)
-            else:
-                dv=du=0
             u = S.u
             v = S.v
             for x in range(int(S.x),int(E.x)):
@@ -231,11 +222,6 @@ def scanline(points,texture_points):
             
     else:
         while(S.y<=B.y):
-            if(E.x-S.x > 0):
-                dv = (E.v-S.v)/(E.x-S.x)
-                du = (E.u-S.u)/(E.x-S.x)
-            else:
-                dv=du=0
             u = S.u
             v = S.v
             for x in range(int(S.x),int(E.x)):
@@ -253,11 +239,6 @@ def scanline(points,texture_points):
             E.y+=1
         S=B
         while(S.y<=C.y):
-            if(E.x-S.x > 0):
-                dv = (E.v-S.v)/(E.x-S.x)
-                du = (E.u-S.u)/(E.x-S.x)
-            else:
-                dv=du=0
             u = S.u
             v = S.v
             for x in range(int(S.x),int(E.x)):
@@ -275,8 +256,11 @@ def scanline(points,texture_points):
             E.y+=1
         
 # update screen
+# Test of scanline alg
+tri = [Point([100,150],[0,0]),Point([500,400],[0.5,0.5]),Point([600,200],[0.75,0.25])]
 
-rotate(0,0)
+scanline([[100,150],[500,400],[600,200]],[[0,0],[0.5,1],[0.75,0.25]])
+#rotate(0,0)
 pygame.display.flip()
 angle = 0
 angle_x = 0

@@ -3,6 +3,7 @@ import numpy as np
 from math import cos, sin, tan, pi
 
 class Triangle:
+    # class consist of 3 vertices V = (p,n,t) p - point (x,y,z,1) n - normal vector t - texture (u,v)
     def __init__(self,p1,p2,p3):
         self.verts = [p1,p2,p3]
     def draw(self):
@@ -12,6 +13,8 @@ class Triangle:
         return [self.verts[0][0],self.verts[1][0],self.verts[2][0]]
     def get_texture(self):
         return [self.verts[0][2],self.verts[1][2],self.verts[2][2]]
+    def get_norm(self):
+        return self.verts[0][1]
 
     def __repr__(self):
         return str(self.verts)
