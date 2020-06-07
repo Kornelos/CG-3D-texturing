@@ -1,22 +1,24 @@
 from math import cos, sin, tan, pi
-
 import numpy as np
 import pygame
 from PIL import Image
 from pygame.locals import *
 from scanline import *
 from cylinder import Cylinder
+from sys import exit
 
-# UI creation
+# UI creation only set pixel and draw line is used from the framework
 width = 1024
 height = 1024
 pygame.init()
-pygame.display.set_caption('CG 3D textured cylinder')
+pygame.display.set_caption('CG 3D textured cylinder -- Use arrows to rotate in X Y plane and {A Z} keys to rotate in Z plane')
 screen = pygame.display.set_mode((width, height))
 CLOCK = pygame.time.Clock()
+font = pygame.font.Font(pygame.font.get_default_font(), 36)
 
+
+# scene setup
 a = width / height  # aspect ratio
-
 theta = pi / 2
 fov = 1 / tan(theta / 2)  # field of view
 
@@ -25,8 +27,12 @@ fNear = 0.1
 fFar = 1000.0
 
 # projection matrix
-M = np.array(
-    [[a * fov, 0, 0, 0], [0, fov, 0, 0], [0, 0, fFar / (fFar - fNear), 1], [0, 0, (-fFar * fNear) / (fFar - fNear), 0]])
+M = np.array([
+    [a * fov, 0, 0, 0],
+    [0, fov, 0, 0],
+    [0, 0, fFar / (fFar - fNear), 1],
+    [0, 0, (-fFar * fNear) / (fFar - fNear), 0]
+])
 
 # scaling matrix
 factor = 400
@@ -53,15 +59,16 @@ T2 = np.eye(4)
 T2[3, 1] = cyl.get_center_y()
 T2[3, 2] = 5  # offset on Z axis (from screen)
 
-# CAMERA --------------------------------------------------
-# vLookDir = np.array([0, 0, 1])
+# CAMERA
 vCamera = np.zeros(3)
-# vUp = np.array([0, 1, 0])
-# vTarget = vCamera + vLookDir
+
+# load texture image
+im = Image.open('tex.png')
+im = im.rotate(180)
+tex_filler = TextureFiller(im, screen)
 
 
-
-
+# function which draws 3D triangles on screen and applies rotation and texturing
 def rotate(d_x, d_y, d_z, texture_filler):
     R_xn = np.array([
         [1, 0, 0, 0],
@@ -89,6 +96,7 @@ def rotate(d_x, d_y, d_z, texture_filler):
 
         points = trg.get_points()
         tex_points = trg.get_texture()
+        #print(tex_points)
         #
 
         for i in range(3):
@@ -114,39 +122,33 @@ def rotate(d_x, d_y, d_z, texture_filler):
                 points[i] = (points[i].dot(M) / points[i][2] + ctr) / 2
                 points[i] = points[i].dot(S)
 
-            #draw_triangle(points[0][0], points[0][1], points[1][0], points[1][1], points[2][0], points[2][1])
-
+            # draw_triangle(points[0][0], points[0][1], points[1][0], points[1][1], points[2][0], points[2][1])
             texture_filler.scan_line([[int(points[0][0]), int(points[0][1])], [int(points[1][0]), int(points[1][1])],
                                       [int(points[2][0]), int(points[2][1])]],
                                      tex_points)
 
 
-# scanline ========================================
-# load texture image
-im = Image.open('texture.jpg')
-#im = Image.open('tex.gif')
 
-tex_filler = TextureFiller(im, screen)
-
-# update screen
-# Test of scanline alg
-tri = [Point([100, 150], [0, 0]), Point([500, 400], [0.5, 0.5]), Point([600, 200], [0.75, 0.25])]
-
-tex_filler.scan_line([[100, 150], [500, 400], [600, 200]], [[0, 0], [0.5, 1], [0.75, 0.25]])
-# rotate(0,0)
-# rotate(0, 0, 0)
+rotate(0, 0, pi, tex_filler)
 
 
 pygame.display.flip()
-angle_x = angle_y = angle_z = 0
+
+angle_x = angle_y = 0
+angle_z = pi
 delta_ang = pi / 60  # rate of rotation
-left = right = up = down = False
+left = right = up = down = z_key = a_key = False
+redraw = False
 # Main loop ------------------------------------------------------------
-while True:
+on = True
+while on:
     for event in pygame.event.get():
         if event.type == QUIT:
+            on = False
+            pygame.display.quit()
             pygame.quit()
-            quit(0)
+            break
+
         if event.type == KEYDOWN:
             if event.key == K_UP:
                 up = True
@@ -156,6 +158,19 @@ while True:
                 left = True
             if event.key == K_RIGHT:
                 right = True
+            if event.key == K_a:
+                a_key = True
+            if event.key == K_z:
+                z_key = True
+            # zoom in/out
+            if event.key == K_s:
+                if T2[3, 2] > cyl.h + 2:
+                    T2[3, 2] -= 1
+                    redraw = True
+            if event.key == K_x:
+                T2[3, 2] += 1
+                redraw = True
+
         if event.type == KEYUP:
             if event.key == K_UP:
                 up = False
@@ -165,8 +180,12 @@ while True:
                 left = False
             if event.key == K_RIGHT:
                 right = False
+            if event.key == K_a:
+                a_key = False
+            if event.key == K_z:
+                z_key = False
 
-    # vForward = vLookDir.dot(2)
+    # X,Y,Z rotation
     if up:
         angle_x += delta_ang
     elif down:
@@ -175,10 +194,16 @@ while True:
         angle_y -= delta_ang
     elif right:
         angle_y += delta_ang
+    if a_key:
+        angle_z += delta_ang
+    elif z_key:
+        angle_z -= delta_ang
 
-    if left or right or up or down:
+    if left or right or up or down or a_key or z_key or redraw:
         screen.fill((0, 0, 0))
-        # angle_x += pi/60
         rotate(angle_x, angle_y, angle_z, tex_filler)
         pygame.display.flip()
+        redraw = False
     CLOCK.tick(60)
+
+exit(0)

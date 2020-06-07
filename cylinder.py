@@ -28,7 +28,7 @@ class Cylinder:
     def __init__(self):
         h = 2  # height
         r = 1  # radius
-        n = 10 # number of the sides of the prism used to draw circle
+        n = 40  # number of the sides of the prism used to draw circle
 
         self.h = h
         # points on the bottom and the top of the cylinder
