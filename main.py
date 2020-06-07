@@ -11,11 +11,12 @@ from sys import exit
 width = 1024
 height = 1024
 pygame.init()
-pygame.display.set_caption('CG 3D textured cylinder -- Use arrows to rotate in X Y plane and {A Z} keys to rotate in Z plane')
+pygame.display.set_caption(
+    'CG 3D textured cylinder -- Use arrows to rotate in X Y plane and {A Z} keys to rotate in Z plane and {S X} to '
+    'zoom in/out')
 screen = pygame.display.set_mode((width, height))
 CLOCK = pygame.time.Clock()
 font = pygame.font.Font(pygame.font.get_default_font(), 36)
-
 
 # scene setup
 a = width / height  # aspect ratio
@@ -96,8 +97,6 @@ def rotate(d_x, d_y, d_z, texture_filler):
 
         points = trg.get_points()
         tex_points = trg.get_texture()
-        #print(tex_points)
-        #
 
         for i in range(3):
             points[i] = points[i].dot(mat_world)
@@ -128,9 +127,7 @@ def rotate(d_x, d_y, d_z, texture_filler):
                                      tex_points)
 
 
-
 rotate(0, 0, pi, tex_filler)
-
 
 pygame.display.flip()
 
@@ -204,6 +201,6 @@ while on:
         rotate(angle_x, angle_y, angle_z, tex_filler)
         pygame.display.flip()
         redraw = False
-    CLOCK.tick(60)
+    CLOCK.tick(30)
 
 exit(0)
